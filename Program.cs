@@ -1,72 +1,110 @@
 ﻿using KR1._2;
+using System.Linq;
+using static System.Formats.Asn1.AsnWriter;
 using System.Xml.Linq;
 
-namespace KR1._2{
+namespace KR1._2
+{
     class Program
     {
         static void Main()
         {
-            List<Student> students = GetStudentList();
-            PrintNames(students);
-            FilterStudents(students);
-            SortStudentsByAge(students);
-            AggregateOperationsForStuds(students);
-            GroupStudentsByAge(students);
+            //List<Student> students = GetStudentList();
+            InitializeDatabase();
+            PrintNames();
+            FilterStudents();
+            SortStudentsByAge();
+            AggregateOperationsForStuds();
+            GroupStudentsByAge();
+        }
+
+        static void InitializeDatabase()
+        {
+            using (var context = new SchoolContext())
+            {
+                // Проверка, существует ли база данных, и её создание, если необходимо
+                context.Database.EnsureCreated();
+
+                // Добавление студентов, если их еще нет
+                if (!context.Students.Any())
+                {
+                    context.Students.AddRange(
+                        GetStudentList()
+                ); ;
+                    context.SaveChanges();
+                }
+            }
         }
 
         //Выборка по имени
-        private static void PrintNames(List<Student> students)
+        private static void PrintNames()
         {
-            Console.WriteLine("\nВыборка:");
-            var studentNames = students.Select(s => s.Name);
-            foreach (var name in studentNames)
+            using (var context = new SchoolContext())
             {
-                Console.WriteLine(name);
+                Console.WriteLine("\nИмена студентов из БД:");
+                var studentNames = context.Students.Select(s => s.Name);
+                foreach (var name in studentNames)
+                {
+                    Console.WriteLine(name);
+                }
             }
         }
 
         //Фильтрация по условию
-        private static void FilterStudents(List<Student> students)
+        private static void FilterStudents()
         {
-            Console.WriteLine("\nФильтрация:");
-            var filteredStudents = students.Where(s => s.Score > 8);
-            foreach (var student in filteredStudents) { 
-                Console.WriteLine($"{student.Name} - {student.Score}");
+            using (var context = new SchoolContext())
+            {
+                Console.WriteLine("\nФильтрация:");
+                var filteredStudents = context.Students.Where(s => s.Score > 8);
+                foreach (var student in filteredStudents)
+                {
+                    Console.WriteLine($"{student.Name} - {student.Score}");
+                }
             }
         }
 
         //Сортировка студентов по возрасту
-        private static void SortStudentsByAge(List<Student> students)
+        private static void SortStudentsByAge()
         {
-            var sortedStudents = students.OrderBy(s => s.Age);
-            Console.WriteLine("\nСтуденты, отсортированные по возрасту:");
-            foreach (var student in sortedStudents)
+            using (var context = new SchoolContext())
             {
-                Console.WriteLine($"{student.Name} - {student.Age}");
+                var sortedStudents = context.Students.OrderBy(s => s.Age);
+                Console.WriteLine("\nСтуденты, отсортированные по возрасту:");
+                foreach (var student in sortedStudents)
+                {
+                    Console.WriteLine($"{student.Name} - {student.Age}");
+                }
             }
         }
 
 
         //агрегатные операции
-        private static void AggregateOperationsForStuds(List<Student> students)
+        private static void AggregateOperationsForStuds()
         {
-            Console.WriteLine("\nМинимальный средний балл: " + students.Min(s => s.Score));
-            Console.WriteLine("\nМаксимальный средний балл: " + students.Max(s => s.Score));
-            Console.WriteLine("\nСредний средний балл: " + students.Average(s => s.Score));
-            Console.WriteLine("\nСуммарный средний балл: " + students.Sum(s => s.Score));
+            using (var context = new SchoolContext())
+            {
+                Console.WriteLine("\nМинимальный средний балл: " + context.Students.Min(s => s.Score));
+                Console.WriteLine("\nМаксимальный средний балл: " + context.Students.Max(s => s.Score));
+                Console.WriteLine("\nСредний средний балл: " + context.Students.Average(s => s.Score));
+                Console.WriteLine("\nСуммарный средний балл: " + context.Students.Sum(s => s.Score));
+            }
         }
 
         //группировка по возврасту
-        private static void GroupStudentsByAge(List <Student> students)
+        private static void GroupStudentsByAge()
         {
-            var groupByAge = students.GroupBy(s => s.Age);
-            Console.WriteLine("\nГруппировка студентов по возрасту:");
-            foreach (var group in groupByAge)
+            using (var context = new SchoolContext())
             {
-                Console.WriteLine($"Возраст: {group.Key}");
-                foreach (var student in group)
+                var groupByAge = context.Students.GroupBy(s => s.Age);
+                Console.WriteLine("\nГруппировка студентов по возрасту:");
+                foreach (var group in groupByAge)
                 {
-                    Console.WriteLine($"{student.Name} - {student.Score}");
+                    Console.WriteLine($"Возраст: {group.Key}");
+                    foreach (var student in group)
+                    {
+                        Console.WriteLine($"{student.Name} - {student.Score}");
+                    }
                 }
             }
         }
